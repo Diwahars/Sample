@@ -1,0 +1,19 @@
+require 'pdf-reader'
+require 'csv'
+
+pdf_reader = PDF::Reader.new("VMware_GOS_Compatibility_Guide.pdf")
+csv = CSV.open("output.tsv","wb", {:col_sep => "\t"})
+area = ""
+
+pdf_reader.pages[42..69].each do |page|
+  page.text.each_line do |line|
+    if /^[a-z|\s]*$/i=~line
+      area = line.strip
+    else
+      country = line.split(/[0-9]/).first     
+      csv_line = line.sub(country,'').strip.split(/[\(|\)]/)
+      csv_line.unshift(country).unshift(area)
+      csv << csv_line
+    end
+  end
+end

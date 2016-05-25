@@ -1,0 +1,31 @@
+from scrapy.contrib.spiders import CrawlSpider, Rule
+from scrapy.contrib.linkextractors.sgml import SgmlLinkExtractor
+from scrapy.selector import HtmlXPathSelector
+
+from stack.items import StackItem
+
+
+class StackSpider(CrawlSpider):
+    name = "stackcrawl"
+    allowed_domains = ["flipkart.com"]
+    start_urls = [
+        "http://www.flipkart.com/mobiles/pr?p%5B%5D=facets.operating_system%255B%255D%3DAndroid&sid=tyy%2C4io&otracker=ch_vn_mobile_brand_Android",
+    ]
+    rules = (
+        Rule(
+            SgmlLinkExtractor(allow=('&page=\d')),
+            callback='parse',
+            follow=True
+        ),
+    )
+
+    def parse(self, response):
+        hxs = HtmlXPathSelector(response)
+        questions = hxs.xpath('//div[@class="pu-details lastUnit"]')
+        for question in questions:
+            item = StackItem()
+            item['title'] = question.xpath(
+                'a[@class="pu-title fk-font-13"]/text()').extract()[0]
+            item['url'] = question.xpath(
+                'a[@class="pu-final"]/div/text()').extract()[0]
+            yield item
